@@ -67,7 +67,8 @@ def arg_to_iter(arg):
 
     try:
         _ = (i for i in arg)
-        return arg
+        # because str will not raise exception
+        return arg if not isinstance(arg, str) else [arg]
     except TypeError:
         return [arg]
 
