@@ -7,7 +7,7 @@ from w3lib.url import canonicalize_url
 from common_crawler.utils.misc import arg_to_iter, compile_regexes, matches, unique_list
 from common_crawler.utils.url import is_valid_url, url_in_domains, url_has_extension, parse_url
 
-__all__ = ['LinkExtractor', 'IGNORED_EXTENSIONS']
+__all__ = ['LinkExtractor', 'IGNORED_EXTENSIONS', 'HTML5_WHITESPACE']
 
 # The list  of the file extensions and not followed if they occur in links
 IGNORED_EXTENSIONS = [
@@ -29,6 +29,8 @@ IGNORED_EXTENSIONS = [
     # other
     'css', 'pdf', 'exe', 'bin', 'rss', 'zip', 'rar',
 ]
+
+HTML5_WHITESPACE = ' \t\n\r\x0c'
 
 
 class LinkExtractor(ABC):
