@@ -1,6 +1,7 @@
 import unittest
 
 from common_crawler.utils.misc import *
+from common_crawler.utils.url import *
 
 
 class TestMisc(unittest.TestCase):
@@ -58,6 +59,47 @@ class TestMisc(unittest.TestCase):
         args = [1, 2, 3, 4, 5, 100, 100, 101, 101]
         args = unique_list(args)
         self.assertEqual(len(args), 7)
+
+
+class TestUrl(unittest.TestCase):
+    """Test for common_crawler.utils.url"""
+
+    def test_is_valid_url(self):
+        url = 'https://www.google.com/'
+        self.assertTrue(is_valid_url(url))
+        url = 'http://www.google.com/'
+        self.assertTrue(is_valid_url(url))
+        url = 'file://balabala'
+        self.assertTrue(is_valid_url(url))
+        url = 'cow://balabala'
+        self.assertTrue(is_valid_url(url=url, valid_prefix={'cow'}))
+
+    def test_parse_url(self):
+        from urllib.parse import ParseResult
+        url = 'https://www.quora.com/'
+        result = parse_url(url)
+        self.assertTrue(isinstance(result, ParseResult))
+        self.assertTrue(isinstance(parse_url(result), ParseResult))
+
+    def test_url_in_domains(self):
+        url = 'https://www.quora.com/'
+        domains = ['www.quora.com']
+        self.assertTrue(url_in_domains(url, domains))
+        self.assertFalse(url_in_domains(url, ['www.google.com']))
+
+    def test_url_has_extension(self):
+        url = 'https://www.quora.com/hello.mp3'
+        url_2 = 'https://www.quora.com/world.pdf'
+        extensions = ['.mp3']
+        self.assertTrue(url_has_extension(url, extensions))
+        self.assertFalse(url_has_extension(url_2, extensions))
+
+    def test_join_url(self):
+        base_url = 'https://www.quora.com'
+        url = '/hello'
+        expect = base_url + url
+        self.assertEqual(join_url(url, base_url), expect)
+        self.assertEqual(join_url(base_url, base_url), base_url)
 
 
 if __name__ == '__main__':
