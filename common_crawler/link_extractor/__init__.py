@@ -107,7 +107,7 @@ class LinkExtractor(ABC):
             return False
         return True
 
-    def _get_response_text(self, response, func_name='text'):
+    def _get_response_text(self, response, func_name='text', encoding='utf-8'):
         """
         Return a text of the response by invoking the specific function,
         return itself if the response is the string.
@@ -116,7 +116,8 @@ class LinkExtractor(ABC):
             return response
         if hasattr(response, func_name):
             text = getattr(response, func_name)
-            return text() if callable(text) else text
+            text = text() if callable(text) else text
+            return text.decode(encoding) if isinstance(text, bytes) else text
         raise ValueError('The response must be str or has a function or param for getting the text')
 
     def _deduplicate(self, links):
