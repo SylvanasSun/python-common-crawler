@@ -3,24 +3,32 @@ import re
 
 __all__ = [
     'dynamic_import', 'verify_variable_type', 'verify_configuration',
-    'matches', 'arg_to_iter', 'compile_regexes', 'unique_list'
+    'matches', 'arg_to_iter', 'compile_regexes', 'unique_list',
+    'DynamicImportReturnType'
 ]
 
 RE_TYPE = type(re.compile('', 0))
 
 
-def dynamic_import(full_name, *args):
+class DynamicImportReturnType(object):
+    FUNCTION = 'FUNCTION',
+    CLASS = 'CLASS',
+    VARIABLE = 'VARIABLE'
+
+
+def dynamic_import(full_name, return_type, *args):
     """
-    Dynamic import a function or class based on the specified full name.
+    Dynamic import a function or class and variable based on the specified full name.
 
     Example:
         common_crawler.xxx.func -> common_crawler.xxx is the module name, func is the function name
         common_crawler.xxx.Hello -> common_crawler.xxx is the module name, Hello is the class name
 
-    :param full_name: the full name of a function or class
+    :param full_name: the full name of a function or class and variable
     :param args: the args list for a function or a constructor in a class
-    :return the return value of a function or instance object of a class
+    :return the return value of a function or instance object of a class and variable
     :raise TypeError if the full name is wrong
+    :raise AttributeError if the return_type is invalid
     """
     verify_variable_type(full_name, str, 'The full name must be the string')
 
@@ -28,10 +36,16 @@ def dynamic_import(full_name, *args):
     module = importlib.import_module(full_name[:last_spot])
     target = getattr(module, full_name[last_spot + 1:])
 
-    if len(args) > 0:
-        return target(*args)
+    if return_type == DynamicImportReturnType.FUNCTION \
+            or return_type == DynamicImportReturnType.CLASS:
+        if len(args) > 0:
+            return target(*args)
+        else:
+            return target()
+    elif return_type == DynamicImportReturnType.VARIABLE:
+        return target
     else:
-        return target()
+        raise AttributeError('The param return_type is invalid, got %s' % return_type)
 
 
 def verify_variable_type(var, expect_type, message):
