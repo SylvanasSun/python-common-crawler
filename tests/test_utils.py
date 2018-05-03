@@ -10,13 +10,22 @@ class TestMisc(unittest.TestCase):
     def test_dynamic_import(self):
         func_full_name = 'math.pow'
         class_full_name = 'queue.Queue'
-        result = dynamic_import(func_full_name, 2, 2)
+        result = dynamic_import(func_full_name,
+                                DynamicImportReturnType.FUNCTION,
+                                2, 2)
         self.assertEqual(result, 4)
-        q = dynamic_import(class_full_name)
+        q = dynamic_import(class_full_name, DynamicImportReturnType.CLASS)
         import queue
         self.assertTrue(isinstance(q, queue.Queue))
+
+        p = dynamic_import('math.pi', DynamicImportReturnType.VARIABLE)
+        from math import pi
+        self.assertEqual(p, pi)
+
         with self.assertRaises(TypeError):
-            dynamic_import(1000)
+            dynamic_import(1000, DynamicImportReturnType.VARIABLE)
+        with self.assertRaises(AttributeError):
+            dynamic_import(class_full_name, 'FAKE')
 
     def test_verify_variable_type(self):
         s = 'hello'
