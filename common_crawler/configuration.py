@@ -9,8 +9,11 @@ CONFIGURATION = {
     # Root urls, it is the starting point of the crawler
     'roots': (),
 
-    # Excluded urls, the url in this tuple will not be placed on the pending queue
-    'excludes': (),
+    # A tuple(or single value) of a string containing domains which won't be considered for extracting the links.
+    'deny_domains': (),
+
+    # A tuple(or single value) of a string containing domains which will be considered for extracting the links.
+    'allow_domains': (),
 
     # Strict host matching
     'strict': True,
