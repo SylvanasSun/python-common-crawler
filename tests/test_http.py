@@ -7,7 +7,7 @@ _TARGET_URL = 'https://www.python.org'
 
 
 def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
+    asyncio.get_event_loop().run_until_complete(coro)
 
 
 class TestAioHttpClient(unittest.TestCase):
@@ -18,57 +18,57 @@ class TestAioHttpClient(unittest.TestCase):
 
     def test_request(self):
         async def work():
-            resp = await self.client.request(method='GET', url=_TARGET_URL)
-            self.assertEqual(resp.status, 200)
+            async with self.client.request(method='GET', url=_TARGET_URL) as resp:
+                self.assertEqual(resp.status, 200)
 
         _run(work())
 
     def test_get(self):
         async def work():
-            resp = await self.client.get(url=_TARGET_URL)
-            self.assertEqual(resp.status, 200)
+            async with self.client.get(url=_TARGET_URL) as resp:
+                self.assertEqual(resp.status, 200)
 
         _run(work())
 
     def test_post(self):
         async def work():
-            resp = await self.client.post(url=_TARGET_URL)
-            self.assertEqual(resp.status, 403)
+            async with self.client.post(url=_TARGET_URL) as resp:
+                self.assertEqual(resp.status, 403)
 
         _run(work())
 
     def test_put(self):
         async def work():
-            resp = await self.client.put(url=_TARGET_URL)
-            self.assertEqual(resp.status, 403)
+            async with self.client.put(url=_TARGET_URL) as resp:
+                self.assertEqual(resp.status, 403)
 
         _run(work())
 
     def test_delete(self):
         async def work():
-            resp = await self.client.delete(url=_TARGET_URL)
-            self.assertEqual(resp.status, 403)
+            async with self.client.delete(url=_TARGET_URL) as resp:
+                self.assertEqual(resp.status, 403)
 
         _run(work())
 
     def test_options(self):
         async def work():
-            resp = await self.client.options(url=_TARGET_URL)
-            self.assertEqual(resp.status, 200)
+            async with self.client.options(url=_TARGET_URL) as resp:
+                self.assertEqual(resp.status, 200)
 
         _run(work())
 
     def test_head(self):
         async def work():
-            resp = await self.client.head(url=_TARGET_URL)
-            self.assertEqual(resp.status, 200)
+            async with self.client.head(url=_TARGET_URL) as resp:
+                self.assertEqual(resp.status, 200)
 
         _run(work())
 
     def test_patch(self):
         async def work():
-            resp = await self.client.patch(url=_TARGET_URL)
-            self.assertEqual(resp.status, 403)
+            async with self.client.patch(url=_TARGET_URL) as resp:
+                self.assertEqual(resp.status, 403)
 
         _run(work())
 
