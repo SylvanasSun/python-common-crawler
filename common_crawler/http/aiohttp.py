@@ -1,7 +1,7 @@
 """The implementation of HttpClient by aiohttp"""
 
 import json
-
+import asyncio
 from aiohttp import ClientSession, ClientRequest, ClientWebSocketResponse, http, ClientResponse
 
 from common_crawler.http import HttpClient
@@ -95,8 +95,10 @@ class AioHttpClient(HttpClient):
     def _get_from_kwargs(self, kwargs, item_name, default_val):
         return kwargs.get(item_name, default_val)
 
+    @asyncio.coroutine
     def __aenter__(self):
         return self
 
+    @asyncio.coroutine
     def __aexit__(self, exc_type, exc_val, exc_tb):
         yield from self.close()
