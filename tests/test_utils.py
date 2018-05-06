@@ -110,6 +110,20 @@ class TestUrl(unittest.TestCase):
         self.assertEqual(join_url(url, base_url), expect)
         self.assertEqual(join_url(base_url, base_url), base_url)
 
+    def test_revise_urls(self):
+        roots = (
+            'https://www.quora.com',
+            'https://www.google.com',
+            'http://www.python.org',
+            'www.netflix.com',
+            'github.com',
+            'www.198.1.1.1.com'
+        )
+        revised = revise_urls(roots)
+        self.assertEqual(len(revised), 4)
+        self.assertTrue(roots[4] not in revised)
+        self.assertTrue(roots[5] not in revised)
+
 
 if __name__ == '__main__':
     unittest.main()
