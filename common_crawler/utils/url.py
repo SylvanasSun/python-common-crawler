@@ -1,11 +1,14 @@
 """Some general purpose URL functions"""
+import re
 from posixpath import splitext
-from urllib.parse import urlparse, ParseResult, urljoin
+from urllib.parse import urlparse, ParseResult, urljoin, splitport
 
 __all__ = [
     'is_valid_url', 'parse_url', 'url_in_domains', 'url_has_extension',
-    'join_url'
+    'join_url', 'revise_urls'
 ]
+
+_DIGIT_HOST_REGEX = r'[\d\.]+'
 
 
 def is_valid_url(url, valid_prefix={'http', 'https', 'file'}):
@@ -41,3 +44,30 @@ def join_url(url, base_url, prefixes=('#', '/')):
         return urljoin(base_url, url)
     else:
         return url
+
+
+def revise_urls(roots, strict=True):
+    """
+    Revise each URL which invalids in the specific roots and returns the list which revised.
+
+    :param roots: a collection that contains urls
+    :param strict: is it a strict matching
+    """
+    result = []
+
+    for root in roots:
+        if not root.startswith('http'):
+            i = root.find('www')
+            if i == -1: continue
+            root = ('http://' + root[i:]).lower()
+        parts = parse_url(root)
+        host, port = splitport(parts.netloc)
+        if not host:
+            continue
+        elif strict:
+            host = host[4:]  # ignore prefix: www.
+            if re.match(_DIGIT_HOST_REGEX, host):
+                continue
+        result.append(root)
+
+    return result
