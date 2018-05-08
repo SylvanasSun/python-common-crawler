@@ -124,18 +124,21 @@ class FetchedUrl(object):
 
     __slots__ = [
         'url', 'parsed_data', 'status', 'charset',
-        'content_type', 'reason', 'headers', 'exception',
+        'content_type', 'content_length', 'reason',
+        'headers', 'exception',
         'redirect_num', 'retries_num', 'redirect_url'
     ]
 
     def __init__(self, url, parsed_data, status, charset,
-                 content_type, reason, headers, exception,
+                 content_type, content_length,
+                 reason, headers, exception,
                  redirect_num, retries_num, redirect_url):
         self.url = url
         self.parsed_data = parsed_data
         self.status = status
         self.charset = charset
         self.content_type = content_type
+        self.content_length = content_length
         self.reason = reason
         self.headers = headers
         self.exception = exception
@@ -144,6 +147,10 @@ class FetchedUrl(object):
         self.redirect_url = redirect_url
 
     def __repr__(self):
-        return 'FetchedUrl(%s-%s:%s)' % (self.url, self.status, self.reason)
+        return 'FetchedUrl(%s-%s:%s content <%s:%s>)' \
+               % (
+                   self.url, self.status, self.reason,
+                   self.content_type, self.content_length
+               )
 
     __str__ = __repr__
