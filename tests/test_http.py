@@ -81,6 +81,38 @@ class TestAioHttpClient(unittest.TestCase):
         r = self.client._get_from_kwargs(kw, 'c', None)
         self.assertEqual(r, None)
 
+    def test_get_response_data(self):
+        from common_crawler.http import ResponseDataType as type
+        from multidict import CIMultiDictProxy
+
+        async def work():
+            async with self.client.get(url=_TARGET_URL) as resp:
+                html = await self.client.get_response_data(resp, type.HTML)
+                self.assertTrue(isinstance(html, str))
+
+                status = await self.client.get_response_data(resp, type.STATUS_CODE)
+                self.assertEqual(status, 200)
+
+                charset = await self.client.get_response_data(resp, type.CHARSET)
+                self.assertEqual(charset, 'utf-8')
+
+                content_type = await self.client.get_response_data(resp, type.CONTENT_TYPE)
+                self.assertEqual(content_type, 'text/html')
+
+                content_length = await self.client.get_response_data(resp, type.CONTENT_LENGTH)
+                self.assertTrue(isinstance(content_length, int))
+
+                reason = await self.client.get_response_data(resp, type.REASON)
+                self.assertEqual(reason, 'OK')
+
+                headers = await self.client.get_response_data(resp, type.HEADERS)
+                self.assertTrue(isinstance(headers, CIMultiDictProxy))
+
+                with self.assertRaises(ValueError):
+                    await self.client.get_response_data(resp, 'something')
+
+        _run(work())
+
     def tearDown(self):
         self.client.close()
 
