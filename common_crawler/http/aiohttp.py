@@ -1,6 +1,5 @@
 """The implementation of HttpClient by aiohttp"""
 
-import asyncio
 import json
 
 from aiohttp import ClientSession, ClientRequest, ClientWebSocketResponse, http, ClientResponse
@@ -90,8 +89,8 @@ class AioHttpClient(HttpClient):
     def patch(self, url, *args, data=None, **kwargs):
         return self.client.patch(url=url, data=data, **kwargs)
 
-    def close(self):
-        self.client.close()
+    async def close(self):
+        await self.client.close()
 
     async def get_response_data(self, response, type):
         if type == ResponseDataType.HTML:
@@ -115,10 +114,8 @@ class AioHttpClient(HttpClient):
     def _get_from_kwargs(self, kwargs, item_name, default_val):
         return kwargs.get(item_name, default_val)
 
-    @asyncio.coroutine
-    def __aenter__(self):
+    async def __aenter__(self):
         return self
 
-    @asyncio.coroutine
-    def __aexit__(self, exc_type, exc_val, exc_tb):
-        yield from self.close()
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
