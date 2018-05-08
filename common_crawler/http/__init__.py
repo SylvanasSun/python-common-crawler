@@ -1,7 +1,17 @@
 """Request and response of HTTP protocol"""
 from abc import ABC, abstractmethod
 
-__all__ = ['HttpClient']
+__all__ = ['HttpClient', 'ResponseDataType']
+
+
+class ResponseDataType(object):
+    HTML = 'HTML',
+    STATUS_CODE = 'STATUS_CODE',
+    CHARSET = 'CHARSET',
+    CONTENT_TYPE = 'CONTENT_TYPE',
+    CONTENT_LENGTH = 'CONTENT_LENGTH',
+    REASON = 'REASON',
+    HEADERS = 'HEADERS',
 
 
 class HttpClient(ABC):
@@ -55,6 +65,16 @@ class HttpClient(ABC):
     @abstractmethod
     def close(self):
         """Release all acquired resources"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_response_data(self, response, type):
+        """
+        Return the response data by specific type, the type such as
+        the text of the HTML, status code, content type and so on.
+
+        For param type refers to the class ResponseDataType.
+        """
         raise NotImplementedError
 
     def __enter__(self):
