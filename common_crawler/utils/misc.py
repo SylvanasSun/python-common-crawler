@@ -4,7 +4,7 @@ import re
 __all__ = [
     'dynamic_import', 'verify_variable_type', 'verify_configuration',
     'matches', 'arg_to_iter', 'compile_regexes', 'unique_list',
-    'DynamicImportReturnType'
+    'DynamicImportReturnType', 'get_function_by_name'
 ]
 
 RE_TYPE = type(re.compile('', 0))
@@ -106,3 +106,11 @@ def unique_list(list_, key=lambda x: x):
         seen.add(seen_key)
         result.append(i)
     return result
+
+
+def get_function_by_name(obj, func_names):
+    func_names = arg_to_iter(func_names)
+    for func_name in func_names:
+        if hasattr(obj, func_name):
+            return getattr(obj, func_name)
+    return None

@@ -124,6 +124,21 @@ class TestUrl(unittest.TestCase):
         self.assertTrue(roots[4] not in revised)
         self.assertTrue(roots[5] not in revised)
 
+    def test_get_function_by_name(self):
+        obj = []
+        func = get_function_by_name(obj, 'append')
+        self.assertTrue(callable(func))
+        func('hello')
+        self.assertEqual(len(obj), 1)
+
+        func = get_function_by_name(obj, 'add')
+        self.assertEqual(func, None)
+
+        func = get_function_by_name(obj, ('add', 'append'))
+        self.assertTrue(callable(func))
+        func('world')
+        self.assertEqual(len(obj), 2)
+
 
 if __name__ == '__main__':
     unittest.main()
