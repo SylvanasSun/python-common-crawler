@@ -3,6 +3,7 @@ import logging
 from abc import ABC, abstractmethod
 
 from common_crawler.configuration import CONFIGURATION
+from common_crawler.utils.misc import get_function_by_name
 from common_crawler.utils.url import revise_urls
 
 __all__ = ['Crawler', 'FetchedUrl']
@@ -61,6 +62,14 @@ class Crawler(ABC):
         self.finished_urls = self._init_finished_urls()
         self.__dict__.update(**kwargs)
 
+        func_names = ('add', 'append')
+        self.add_to_seen_urls = get_function_by_name(self.seen_urls, func_names)
+        self.add_to_finished_urls = get_function_by_name(self.finished_urls, func_names)
+        if not callable(self.add_to_seen_urls) or not callable(self.add_to_finished_urls):
+            message = """seen_urls and finished_urls must have to one
+            function that name is "add" or "append" for adding an element"""
+            raise ValueError(message)
+
         roots = revise_urls(roots, strict)
         for root in roots:
             self.add_to_task_queue(root)
@@ -103,11 +112,18 @@ class Crawler(ABC):
         """Release all acquired resources"""
         raise NotImplementedError
 
-    def _init_seen_urls(self):
-        return set()
+    """
+    seen_urls and finished_urls must have to one function that name is "add" or "append" for 
+    adding an element and the function that name is "remove" for delete an element.
+    """
 
+    @abstractmethod
+    def _init_seen_urls(self):
+        raise NotImplementedError
+
+    @abstractmethod
     def _init_finished_urls(self):
-        return []
+        raise NotImplementedError
 
     def __enter__(self):
         return self
