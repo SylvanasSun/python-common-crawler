@@ -3,7 +3,7 @@ import logging
 from abc import ABC, abstractmethod
 
 from common_crawler.configuration import CONFIGURATION
-from common_crawler.utils.misc import get_function_by_name
+from common_crawler.utils.misc import get_function_by_name, arg_to_iter
 from common_crawler.utils.url import revise_urls
 
 __all__ = ['Crawler', 'FetchedUrl']
@@ -70,7 +70,7 @@ class Crawler(ABC):
             function that name is "add" or "append" for adding an element"""
             raise ValueError(message)
 
-        roots = revise_urls(roots, strict)
+        roots = revise_urls(arg_to_iter(roots), strict)
         for root in roots:
             self.add_to_task_queue(root)
 
