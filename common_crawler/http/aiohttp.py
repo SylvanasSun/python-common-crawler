@@ -54,12 +54,7 @@ class AioHttpClient(HttpClient):
         return self.client.request(method=method, url=url, **kwargs)
 
     def get(self, url, *args, **kwargs):
-        allow_redirects = self._get_from_kwargs(kwargs=kwargs,
-                                                item_name='allow_redirects',
-                                                default_val=True)
-        return self.client.get(url=url,
-                               allow_redirects=allow_redirects,
-                               **kwargs)
+        return self.client.get(url=url, **kwargs)
 
     def post(self, url, *args, data=None, **kwargs):
         return self.client.post(url=url, data=data, **kwargs)
@@ -71,20 +66,10 @@ class AioHttpClient(HttpClient):
         return self.client.delete(url=url, **kwargs)
 
     def options(self, url, *args, **kwargs):
-        allow_redirects = self._get_from_kwargs(kwargs=kwargs,
-                                                item_name='allow_redirects',
-                                                default_val=True)
-        return self.client.options(url=url,
-                                   allow_redirects=allow_redirects,
-                                   **kwargs)
+        return self.client.options(url=url, **kwargs)
 
     def head(self, url, *args, **kwargs):
-        allow_redirects = self._get_from_kwargs(kwargs=kwargs,
-                                                item_name='allow_redirects',
-                                                default_val=False)
-        return self.client.head(url=url,
-                                allow_redirects=allow_redirects,
-                                **kwargs)
+        return self.client.head(url=url, **kwargs)
 
     def patch(self, url, *args, data=None, **kwargs):
         return self.client.patch(url=url, data=data, **kwargs)
@@ -110,9 +95,6 @@ class AioHttpClient(HttpClient):
             return response.headers
         else:
             raise ValueError('The param type is invalid, got %s' % type)
-
-    def _get_from_kwargs(self, kwargs, item_name, default_val):
-        return kwargs.get(item_name, default_val)
 
     async def __aenter__(self):
         return self
