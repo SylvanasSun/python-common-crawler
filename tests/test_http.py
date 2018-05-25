@@ -1,125 +1,150 @@
 import asyncio
 import unittest
 
+from aioresponses import aioresponses
+
 from common_crawler.http.aiohttp import AioHttpClient
 
-_TARGET_URL = 'https://www.python.org'
+_TARGET_URL = 'https://www.example.com'
 
-
-def _run(coro):
-    asyncio.get_event_loop().run_until_complete(coro)
+_LOOP = asyncio.get_event_loop()
 
 
 class TestAioHttpClient(unittest.TestCase):
     """Test for common_crawler.http.aiohttp.AioHttpClient"""
 
-    def test_request(self):
+    @aioresponses()
+    def test_request(self, mocked):
         async def work():
             async with AioHttpClient() as client:
+                mocked.get(_TARGET_URL, status=200)
                 async with client.request(method='GET', url=_TARGET_URL) as resp:
                     self.assertEqual(resp.status, 200)
 
-        _run(work())
+        _LOOP.run_until_complete(work())
 
-    def test_get(self):
+    @aioresponses()
+    def test_get(self, mocked):
         async def work():
             async with AioHttpClient() as client:
-                async with client.get(url=_TARGET_URL) as resp:
+                mocked.get(_TARGET_URL, status=200)
+                async with client.get(_TARGET_URL) as resp:
                     self.assertEqual(resp.status, 200)
 
-        _run(work())
+        _LOOP.run_until_complete(work())
 
-    def test_post(self):
+    @aioresponses()
+    def test_post(self, mocked):
         async def work():
             async with AioHttpClient() as client:
+                mocked.post(_TARGET_URL, status=200)
                 async with client.post(url=_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 403)
+                    self.assertEqual(resp.status, 200)
 
-        _run(work())
+        _LOOP.run_until_complete(work())
 
-    def test_put(self):
+    @aioresponses()
+    def test_put(self, mocked):
         async def work():
             async with AioHttpClient() as client:
+                mocked.put(_TARGET_URL, status=200)
                 async with client.put(url=_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 403)
+                    self.assertEqual(resp.status, 200)
 
-        _run(work())
+        _LOOP.run_until_complete(work())
 
-    def test_delete(self):
+    @aioresponses()
+    def test_delete(self, mocked):
         async def work():
             async with AioHttpClient() as client:
+                mocked.delete(_TARGET_URL, status=200)
                 async with client.delete(url=_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 403)
+                    self.assertEqual(resp.status, 200)
 
-        _run(work())
+        _LOOP.run_until_complete(work())
 
-    def test_options(self):
+    @aioresponses()
+    def test_options(self, mocked):
         async def work():
             async with AioHttpClient() as client:
+                mocked.options(_TARGET_URL, status=200)
                 async with client.options(url=_TARGET_URL) as resp:
                     self.assertEqual(resp.status, 200)
 
-        _run(work())
+        _LOOP.run_until_complete(work())
 
-    def test_head(self):
+    @aioresponses()
+    def test_head(self, mocked):
         async def work():
             async with AioHttpClient() as client:
+                mocked.head(_TARGET_URL, status=200)
                 async with client.head(url=_TARGET_URL) as resp:
                     self.assertEqual(resp.status, 200)
 
-        _run(work())
+        _LOOP.run_until_complete(work())
 
-    def test_patch(self):
+    @aioresponses()
+    def test_patch(self, mocked):
         async def work():
             async with AioHttpClient() as client:
+                mocked.patch(_TARGET_URL, status=200)
                 async with client.patch(url=_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 403)
+                    self.assertEqual(resp.status, 200)
 
-        _run(work())
-
-    def test_get_from_kwargs(self):
-        kw = {'a': 0, 'b': 1}
-        client = AioHttpClient()
-        r = client._get_from_kwargs(kw, 'a', None)
-        self.assertEqual(r, kw['a'])
-        r = client._get_from_kwargs(kw, 'b', None)
-        self.assertEqual(r, kw['b'])
-        r = client._get_from_kwargs(kw, 'c', None)
-        self.assertEqual(r, None)
-        client.close()
+        _LOOP.run_until_complete(work())
 
     def test_get_response_data(self):
         from common_crawler.http import ResponseDataType as type
-        from multidict import CIMultiDictProxy
+
+        class Response(object):
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+
+            async def text(self):
+                return 'HTML'
+
+        response = Response(status=200,
+                            charset='utf-8',
+                            content_type='text/html',
+                            content_length=233,
+                            reason='OK',
+                            headers={'connection': 'keep-alive'})
 
         async def work():
             async with AioHttpClient() as client:
-                async with client.get(url=_TARGET_URL) as resp:
-                    html = await client.get_response_data(resp, type.HTML)
-                    self.assertTrue(isinstance(html, str))
+                html = await client.get_response_data(response, type.HTML)
+                self.assertTrue(isinstance(html, str))
+                self.assertEqual('HTML', html)
 
-                    status = await client.get_response_data(resp, type.STATUS_CODE)
-                    self.assertEqual(status, 200)
+                status = await client.get_response_data(response, type.STATUS_CODE)
+                self.assertTrue(isinstance(status, int))
+                self.assertEqual(status, 200)
 
-                    charset = await client.get_response_data(resp, type.CHARSET)
-                    self.assertEqual(charset, 'utf-8')
+                charset = await client.get_response_data(response, type.CHARSET)
+                self.assertTrue(isinstance(charset, str))
+                self.assertEqual(charset, 'utf-8')
 
-                    content_type = await client.get_response_data(resp, type.CONTENT_TYPE)
-                    self.assertEqual(content_type, 'text/html')
+                content_type = await client.get_response_data(response, type.CONTENT_TYPE)
+                self.assertTrue(isinstance(content_type, str))
+                self.assertEqual(content_type, 'text/html')
 
-                    content_length = await client.get_response_data(resp, type.CONTENT_LENGTH)
-                    self.assertTrue(isinstance(content_length, int))
+                content_length = await client.get_response_data(response, type.CONTENT_LENGTH)
+                self.assertTrue(isinstance(content_length, int))
+                self.assertEqual(content_length, 233)
 
-                    reason = await client.get_response_data(resp, type.REASON)
-                    self.assertEqual(reason, 'OK')
+                reason = await client.get_response_data(response, type.REASON)
+                self.assertTrue(isinstance(reason, str))
+                self.assertEqual(reason, 'OK')
 
-                    headers = await client.get_response_data(resp, type.HEADERS)
-                    self.assertTrue(isinstance(headers, CIMultiDictProxy))
+                headers = await client.get_response_data(response, type.HEADERS)
+                self.assertTrue(isinstance(headers, dict))
+                self.assertTrue('connection' in headers)
+                self.assertEqual(headers['connection'], 'keep-alive')
 
-                    with self.assertRaises(ValueError):
-                        await client.get_response_data(resp, 'something')
+                with self.assertRaises(ValueError):
+                    await client.get_response_data(response, 'something')
 
-        _run(work())
+        _LOOP.run_until_complete(work())
 
 
 if __name__ == '__main__':
