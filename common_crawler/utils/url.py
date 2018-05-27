@@ -5,7 +5,7 @@ from urllib.parse import urlparse, ParseResult, urljoin, splitport
 
 __all__ = [
     'is_valid_url', 'parse_url', 'url_in_domains', 'url_has_extension',
-    'join_url', 'revise_urls'
+    'join_url', 'revise_urls', 'is_redirect', 'get_domain'
 ]
 
 _DIGIT_HOST_REGEX = r'[\d\.]+'
@@ -71,3 +71,19 @@ def revise_urls(roots, strict=True):
         result.append(root)
 
     return result
+
+
+def is_redirect(status):
+    return status in (300, 301, 302, 303, 307)
+
+
+def get_domain(url):
+    """
+    Get the domain from specified url for ignoring the prefix of HTTP/HTTPS
+
+    e.g.:
+        url = 'https://www.python.org/'
+        get_domain(url) = 'www.python.org'
+    """
+    url = url[:url.rfind('/')] if url.rfind('/') != -1 else url
+    return url[url.find('www'):] if url.find('www') != -1 else url

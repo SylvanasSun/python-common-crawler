@@ -69,6 +69,21 @@ class TestMisc(unittest.TestCase):
         args = unique_list(args)
         self.assertEqual(len(args), 7)
 
+    def test_get_function_by_name(self):
+        obj = []
+        func = get_function_by_name(obj, 'append')
+        self.assertTrue(callable(func))
+        func('hello')
+        self.assertEqual(len(obj), 1)
+
+        func = get_function_by_name(obj, 'add')
+        self.assertEqual(func, None)
+
+        func = get_function_by_name(obj, ('add', 'append'))
+        self.assertTrue(callable(func))
+        func('world')
+        self.assertEqual(len(obj), 2)
+
 
 class TestUrl(unittest.TestCase):
     """Test for common_crawler.utils.url"""
@@ -124,20 +139,20 @@ class TestUrl(unittest.TestCase):
         self.assertTrue(roots[4] not in revised)
         self.assertTrue(roots[5] not in revised)
 
-    def test_get_function_by_name(self):
-        obj = []
-        func = get_function_by_name(obj, 'append')
-        self.assertTrue(callable(func))
-        func('hello')
-        self.assertEqual(len(obj), 1)
+    def test_is_redirect(self):
+        self.assertTrue(is_redirect(300))
+        self.assertTrue(is_redirect(301))
+        self.assertTrue(is_redirect(302))
+        self.assertTrue(is_redirect(303))
+        self.assertTrue(is_redirect(307))
+        self.assertFalse(is_redirect(200))
+        self.assertFalse(is_redirect(500))
+        self.assertFalse(is_redirect(404))
 
-        func = get_function_by_name(obj, 'add')
-        self.assertEqual(func, None)
-
-        func = get_function_by_name(obj, ('add', 'append'))
-        self.assertTrue(callable(func))
-        func('world')
-        self.assertEqual(len(obj), 2)
+    def test_get_domain(self):
+        url = 'https://www.python.org/'
+        expected = 'www.python.org'
+        self.assertEqual(expected, get_domain(url))
 
 
 if __name__ == '__main__':
