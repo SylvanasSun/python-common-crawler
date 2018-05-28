@@ -85,5 +85,5 @@ def get_domain(url):
         url = 'https://www.python.org/'
         get_domain(url) = 'www.python.org'
     """
-    url = url[:url.rfind('/')] if url.rfind('/') != -1 else url
+    url = url[:-1] if url[-1] == '/' else url
     return url[url.find('www'):] if url.find('www') != -1 else url

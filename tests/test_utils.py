@@ -153,6 +153,8 @@ class TestUrl(unittest.TestCase):
         url = 'https://www.python.org/'
         expected = 'www.python.org'
         self.assertEqual(expected, get_domain(url))
+        url = 'https://www.python.org'
+        self.assertEqual(expected, get_domain(url))
 
 
 if __name__ == '__main__':
