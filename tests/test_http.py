@@ -1,11 +1,13 @@
 import asyncio
 import unittest
-
-from aioresponses import aioresponses
+from unittest import mock
 
 from common_crawler.http.aiohttp import AioHttpClient
+from tests.mock import FakedObject
 
-_TARGET_URL = 'https://www.example.com'
+_TARGET_URL = 'https://www.example.com/hello'
+
+_MOCKED_TARGET = '%s.%s' % (AioHttpClient.__module__, AioHttpClient.__name__)
 
 _LOOP = asyncio.get_event_loop()
 
@@ -13,102 +15,125 @@ _LOOP = asyncio.get_event_loop()
 class TestAioHttpClient(unittest.TestCase):
     """Test for common_crawler.http.aiohttp.AioHttpClient"""
 
-    @aioresponses()
+    @mock.patch(_MOCKED_TARGET + '.request')
     def test_request(self, mocked):
+        status = 200
+        method = 'GET'
+        mocked.return_value = FakedObject(status=status)
+
         async def work():
             async with AioHttpClient() as client:
-                mocked.get(_TARGET_URL, status=200)
-                async with client.request(method='GET', url=_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 200)
+                async with client.request(method=method, url=_TARGET_URL) as resp:
+                    self.assertEqual(status, resp.status)
 
         _LOOP.run_until_complete(work())
+        mocked.assert_called_once_with(method=method, url=_TARGET_URL)
 
-    @aioresponses()
+    @mock.patch(_MOCKED_TARGET + '.get')
     def test_get(self, mocked):
+        status = 200
+        mocked.return_value = FakedObject(status=200)
+
         async def work():
             async with AioHttpClient() as client:
-                mocked.get(_TARGET_URL, status=200)
-                async with client.get(_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 200)
+                async with client.get(url=_TARGET_URL) as resp:
+                    self.assertEqual(status, resp.status)
 
         _LOOP.run_until_complete(work())
+        mocked.assert_called_once_with(url=_TARGET_URL)
 
-    @aioresponses()
+    @mock.patch(_MOCKED_TARGET + '.post')
     def test_post(self, mocked):
+        status = 200
+        mocked.return_value = FakedObject(status=status)
+
         async def work():
             async with AioHttpClient() as client:
-                mocked.post(_TARGET_URL, status=200)
                 async with client.post(url=_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 200)
+                    self.assertEqual(status, resp.status)
 
         _LOOP.run_until_complete(work())
+        mocked.assert_called_once_with(url=_TARGET_URL)
 
-    @aioresponses()
+    @mock.patch(_MOCKED_TARGET + '.put')
     def test_put(self, mocked):
+        status = 200
+        mocked.return_value = FakedObject(status=status)
+
         async def work():
             async with AioHttpClient() as client:
-                mocked.put(_TARGET_URL, status=200)
                 async with client.put(url=_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 200)
+                    self.assertEqual(status, resp.status)
 
         _LOOP.run_until_complete(work())
+        mocked.assert_called_once_with(url=_TARGET_URL)
 
-    @aioresponses()
+    @mock.patch(_MOCKED_TARGET + '.delete')
     def test_delete(self, mocked):
+        status = 200
+        mocked.return_value = FakedObject(status=status)
+
         async def work():
             async with AioHttpClient() as client:
-                mocked.delete(_TARGET_URL, status=200)
                 async with client.delete(url=_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 200)
+                    self.assertEqual(status, resp.status)
 
         _LOOP.run_until_complete(work())
+        mocked.assert_called_once_with(url=_TARGET_URL)
 
-    @aioresponses()
+    @mock.patch(_MOCKED_TARGET + '.options')
     def test_options(self, mocked):
+        status = 200
+        mocked.return_value = FakedObject(status=status)
+
         async def work():
             async with AioHttpClient() as client:
-                mocked.options(_TARGET_URL, status=200)
                 async with client.options(url=_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 200)
+                    self.assertEqual(status, resp.status)
 
         _LOOP.run_until_complete(work())
+        mocked.assert_called_once_with(url=_TARGET_URL)
 
-    @aioresponses()
+    @mock.patch(_MOCKED_TARGET + '.head')
     def test_head(self, mocked):
+        status = 200
+        mocked.return_value = FakedObject(status=status)
+
         async def work():
             async with AioHttpClient() as client:
-                mocked.head(_TARGET_URL, status=200)
                 async with client.head(url=_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 200)
+                    self.assertEqual(status, resp.status)
 
         _LOOP.run_until_complete(work())
+        mocked.assert_called_once_with(url=_TARGET_URL)
 
-    @aioresponses()
+    @mock.patch(_MOCKED_TARGET + '.patch')
     def test_patch(self, mocked):
+        status = 200
+        mocked.return_value = FakedObject(status=status)
+
         async def work():
             async with AioHttpClient() as client:
-                mocked.patch(_TARGET_URL, status=200)
                 async with client.patch(url=_TARGET_URL) as resp:
-                    self.assertEqual(resp.status, 200)
+                    self.assertEqual(status, resp.status)
 
         _LOOP.run_until_complete(work())
+        mocked.assert_called_once_with(url=_TARGET_URL)
 
     def test_get_response_data(self):
         from common_crawler.http import ResponseDataType as type
 
-        class Response(object):
-            def __init__(self, **kwargs):
-                self.__dict__.update(kwargs)
+        async def text():
+            return 'HTML'
 
-            async def text(self):
-                return 'HTML'
+        response = FakedObject(status=200,
+                               charset='utf-8',
+                               content_type='text/html',
+                               content_length=233,
+                               reason='OK',
+                               headers={'connection': 'keep-alive'})
 
-        response = Response(status=200,
-                            charset='utf-8',
-                            content_type='text/html',
-                            content_length=233,
-                            reason='OK',
-                            headers={'connection': 'keep-alive'})
+        response.text = text
 
         async def work():
             async with AioHttpClient() as client:

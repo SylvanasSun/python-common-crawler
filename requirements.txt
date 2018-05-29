@@ -2,4 +2,3 @@ aiohttp
 cchardet
 aiodns
 lxml
-aioresponses
