@@ -4,6 +4,7 @@ from lxml import etree
 
 from common_crawler.link import Link
 from common_crawler.link_extractor.lxml import LxmlLinkExtractor
+from tests.mock import FakedObject
 
 
 class TestLxmlLinkExtractor(unittest.TestCase):
@@ -26,12 +27,7 @@ class TestLxmlLinkExtractor(unittest.TestCase):
             </html>
         '''
 
-        class Response(object):
-            def __init__(self, url, text):
-                self.url = url
-                self.text = text
-
-        response = Response(url='https://www.google.com', text=html)
+        response = FakedObject(url='https://www.google.com', text=html)
         self.response = response
         self.linkExtractor = LxmlLinkExtractor(allow=allow,
                                                deny=deny,
@@ -57,10 +53,12 @@ class TestLxmlLinkExtractor(unittest.TestCase):
         self.assertFalse(self.linkExtractor._link_allowed(urls[6]))
 
     def test_get_response_text(self):
-        from urllib.request import urlopen
-        response = urlopen('http://github.com/')
+        text = 'Example'
+        response = FakedObject()
+        response.read = lambda: text
         result = self.linkExtractor._get_response_text(response, func_name='read')
         self.assertTrue(isinstance(result, str))
+        self.assertEqual(text, result)
 
     def test_deduplicate(self):
         links = [
