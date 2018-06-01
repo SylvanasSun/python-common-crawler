@@ -84,7 +84,7 @@ class AsyncCrawler(Crawler):
             await self._handle_request_info(task, resp)
 
             if is_redirect(task.status):
-                location = task.headers.get('location', '')
+                location = task.headers.get('location', url)
                 task.redirect_url = join_url(location, base_url=url)
 
                 if get_domain(task.redirect_url) in self.seen_urls:
