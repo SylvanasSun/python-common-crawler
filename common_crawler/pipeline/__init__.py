@@ -26,15 +26,15 @@ class Pipeline(ABC):
         self.task = task
         self.__dict__.update(kwargs)
 
-    def transmit(self):
+    def transmit(self, **kwargs):
         """
         function transmit() will be called by Engine and user don't need to implement it
         """
         try:
-            self.setup()
-            self.handle()
+            self.setup(**kwargs)
+            self.handle(**kwargs)
         finally:
-            self.close()
+            self.close(**kwargs)
 
     @abstractmethod
     def setup(self, **kwargs):
