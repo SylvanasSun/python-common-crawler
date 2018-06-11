@@ -54,5 +54,16 @@ CONFIGURATION = {
 
 # Specify the address of each component
 COMPONENTS_CONFIG = {
+    # The crawler is for crawling url then return an object FetchedUrl to Engine
+    # for extract link and handle data, the class must be a subclass of common_crawler.crawler.Crawler
+    'crawler': 'common_crawler.crawler.async.AsyncCrawler',
 
+    # The link_extractor is for extract link from a specified response and it must be a subclass
+    # of common_crawler.link_extractor.LinkExtractor, about rules of this action, is set in the
+    # CONFIGURATION such as deny_domains, allow_domains and so on
+    'link_extractor': 'common_crawler.link_extractor.lxml.LxmlLinkExtractor',
+
+    # The pipeline is for transmitting parsed data to a place that you want it and must be a subclass of
+    # common_crawler.pipeline.Pipeline
+    'pipeline': 'common_crawler.pipeline.file.SimpleFilePipeline'
 }
