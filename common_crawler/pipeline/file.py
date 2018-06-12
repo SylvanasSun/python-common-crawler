@@ -17,12 +17,11 @@ class SimpleFilePipeline(Pipeline):
     """
 
     def __init__(self,
-                 task,
                  enable_multithread=True,
                  max_workers=multiprocessing.cpu_count(),
                  thread_name_prefix='SimpleFilePipeline-',
                  **kwargs):
-        super(__class__, self).__init__(task, **kwargs)
+        super(__class__, self).__init__(**kwargs)
 
         self.enable_multithread = enable_multithread
         if enable_multithread:
@@ -30,6 +29,7 @@ class SimpleFilePipeline(Pipeline):
                                                  thread_name_prefix=thread_name_prefix)
 
     def transmit(self,
+                 task,
                  filename=None,
                  dirname='',
                  encode='utf-8',
@@ -39,6 +39,8 @@ class SimpleFilePipeline(Pipeline):
         transmit(), because close() will release resource of the thread pool and
         will cause subsequent operation is disabled
         """
+        super(__class__, self)._init_task(task)
+
         self.setup(**kwargs)
 
         filename = filename if filename else '%s:%s' % (get_domain(self.task.url),

@@ -17,24 +17,32 @@ class Pipeline(ABC):
     and determine transfer behavior by means of function handle(), setup() and close()
     """
 
-    def __init__(self, task, **kwargs):
-        if not isinstance(task, FetchedUrl):
-            raise ValueError('Received class of the param task must be %s, currently got %s'
-                             % ('FetchedUrl', task.__class__.__name__))
-
-        self.data = task.parsed_data
-        self.task = task
+    def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
-    def transmit(self, **kwargs):
+    def transmit(self, task, **kwargs):
         """
         function transmit() will be called by Engine and user don't need to implement it
         """
+        self._init_task(task)
+
         try:
             self.setup(**kwargs)
             self.handle(**kwargs)
         finally:
             self.close(**kwargs)
+
+    def _init_task(self, task):
+        if not isinstance(task, FetchedUrl):
+            raise ValueError('Received class of the param task must be %s.%s, currently got %s.%s'
+                             % (FetchedUrl.__module__,
+                                FetchedUrl.__name__,
+                                task.__class__.__module__,
+                                task.__class__.__name__)
+                             )
+
+        self.task = task
+        self.data = task.parsed_data
 
     @abstractmethod
     def setup(self, **kwargs):

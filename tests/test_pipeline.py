@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, mock_open, MagicMock
 
 from common_crawler.crawler import FetchedUrl
 from common_crawler.pipeline.file import SimpleFilePipeline
@@ -27,8 +27,8 @@ class TestSimpleFilePipeline(unittest.TestCase):
         expected_encode = 'utf-8'
 
         with patch(self.open_path, m):
-            with SimpleFilePipeline(task=self.task) as pipeline:
-                pipeline.transmit(encode=expected_encode)
+            with SimpleFilePipeline() as pipeline:
+                pipeline.transmit(task=self.task, encode=expected_encode)
 
         domain = self.task.url[self.task.url.find('www'):]
         default_filename = '%s:%s' % (domain, self.task.status)
@@ -36,6 +36,15 @@ class TestSimpleFilePipeline(unittest.TestCase):
         m.assert_called_once_with(default_filename, expected_mode)
         handle = m()
         handle.write.assert_called_once_with(self.task.parsed_data.encode(expected_encode))
+
+    def test_task_with_invalid(self):
+        self.task = MagicMock(url='https://www.example.com',
+                              parsed_data='Test',
+                              status=200)
+
+        with SimpleFilePipeline() as pipeline:
+            with self.assertRaises(ValueError):
+                pipeline.transmit(task=self.task)
 
 
 if __name__ == '__main__':
