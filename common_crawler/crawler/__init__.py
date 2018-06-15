@@ -142,13 +142,15 @@ class FetchedUrl(object):
         'url', 'parsed_data', 'status', 'charset',
         'content_type', 'content_length', 'reason',
         'headers', 'exception',
-        'redirect_num', 'retries_num', 'redirect_url'
+        'redirect_num', 'retries_num', 'redirect_url',
+        'html'
     ]
 
     def __init__(self, url, parsed_data, status, charset,
                  content_type, content_length,
                  reason, headers, exception,
-                 redirect_num, retries_num, redirect_url):
+                 redirect_num, retries_num, redirect_url,
+                 html):
         self.url = url
         self.parsed_data = parsed_data
         self.status = status
@@ -161,6 +163,7 @@ class FetchedUrl(object):
         self.redirect_num = redirect_num
         self.retries_num = retries_num
         self.redirect_url = redirect_url
+        self.html = html
 
     def __repr__(self):
         return 'FetchedUrl(%s-%s:%s content <%s:%s>)' \

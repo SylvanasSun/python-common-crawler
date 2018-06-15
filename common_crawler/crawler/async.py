@@ -100,9 +100,9 @@ class AsyncCrawler(Crawler):
                     return None, url
             else:
                 if parse_link is not None:
-                    task.parsed_data = parse_link(resp)
+                    task.parsed_data = parse_link(task)
                 else:
-                    task.parsed_data = await self.parse_link(resp)
+                    task.parsed_data = self.parse_link(task)
                 return task, url
 
     async def _handle_request_info(self, task, response):
@@ -113,12 +113,13 @@ class AsyncCrawler(Crawler):
         task.content_length = await self.http_client.get_response_data(response, type.CONTENT_LENGTH)
         task.reason = await self.http_client.get_response_data(response, type.REASON)
         task.headers = await self.http_client.get_response_data(response, type.HEADERS)
+        task.html = await self.http_client.get_response_data(response, type.HTML)
 
-    async def parse_link(self, response):
+    def parse_link(self, response):
         """
         Only return the HTML content in the default implementation.
         """
-        return await self.http_client.get_response_data(response, type.HTML)
+        return response.html
 
     def add_to_task_queue(self, url):
         urls = arg_to_iter(url)
@@ -135,7 +136,8 @@ class AsyncCrawler(Crawler):
                            exception=None,
                            redirect_num=0,
                            retries_num=0,
-                           redirect_url=None)
+                           redirect_url=None,
+                           html=None)
             )
         self.logger.debug('Adding the url %s into the task queue' % urls)
 

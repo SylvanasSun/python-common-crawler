@@ -77,6 +77,7 @@ class AsyncCrawlerTest(unittest.TestCase):
                 self.assertEqual(_CHARSET, t.charset)
                 # default parse_link() will to extract HTML
                 self.assertEqual(_BODY, t.parsed_data)
+                self.assertEqual(t.parsed_data, t.html)
             # seen_urls only store the domain name
             self.assertTrue(_URL[_URL.find('www'):] in crawler.seen_urls)
             self.assertTrue(t in crawler.finished_urls)
@@ -93,7 +94,8 @@ class AsyncCrawlerTest(unittest.TestCase):
                                           charset=_CHARSET,
                                           content_type=_CONTENT_TYPE,
                                           content_length=_CONTENT_LENGTH,
-                                          reason=_REASON)
+                                          reason=_REASON,
+                                          text=_TEXT)
         list = []
 
         async def work(crawler):
@@ -107,11 +109,13 @@ class AsyncCrawlerTest(unittest.TestCase):
 
     def test_parse_link(self):
         crawler = AsyncCrawler()
+        self.response.html = _BODY
 
         async def work():
-            expected = await self.response.text()
-            actual = await crawler.parse_link(self.response)
-            self.assertEqual(expected, actual)
+            async with crawler:
+                expected = await self.response.text()
+                actual = crawler.parse_link(self.response)
+                self.assertEqual(expected, actual)
 
         asyncio.get_event_loop().run_until_complete(work())
 
@@ -119,15 +123,16 @@ class AsyncCrawlerTest(unittest.TestCase):
         crawler = AsyncCrawler()
 
         async def work():
-            crawler.add_to_task_queue(_URL)
-            self.assertEqual(1, crawler.task_queue.qsize())
-            url_2 = 'https://www.python.org'
-            crawler.add_to_task_queue(url_2)
-            self.assertEqual(2, crawler.task_queue.qsize())
-            task = await crawler.task_queue.get()
-            self.assertEqual(_URL, task.url)
-            task = await crawler.task_queue.get()
-            self.assertEqual(url_2, task.url)
+            async with crawler:
+                crawler.add_to_task_queue(_URL)
+                self.assertEqual(1, crawler.task_queue.qsize())
+                url_2 = 'https://www.python.org'
+                crawler.add_to_task_queue(url_2)
+                self.assertEqual(2, crawler.task_queue.qsize())
+                task = await crawler.task_queue.get()
+                self.assertEqual(_URL, task.url)
+                task = await crawler.task_queue.get()
+                self.assertEqual(url_2, task.url)
 
         asyncio.get_event_loop().run_until_complete(work())
 
