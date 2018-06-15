@@ -1,6 +1,7 @@
 """The engine for start the crawler system, it assembles all components then start crawling."""
 
 import logging
+import sys
 from abc import ABC, abstractmethod
 
 from common_crawler.configuration import CONFIGURATION, COMPONENTS_CONFIG
@@ -168,11 +169,19 @@ class Engine(ABC):
                              )
 
     def start(self):
-        self.logger.info('The Crawler Engine<%s.%s> starts...'
-                         % (self.__module__, self.__class__.__name__))
-        self.show_config_info()
-        self.work()
-        self.reporting()
+        try:
+            self.logger.info('The Crawler Engine<%s.%s> starts...'
+                             % (self.__module__, self.__class__.__name__))
+
+            self.show_config_info()
+            self.work()
+        except KeyboardInterrupt:
+            sys.stderr.flush()
+            message = '\nInterrupted by keyboard\n'
+            print(message)
+            self.logger.error(message)
+        finally:
+            self.reporting()
 
     def show_config_info(self):
         self.logger.info('[CONFIG INFORMATION] ----> ')
