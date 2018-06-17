@@ -2,6 +2,7 @@
 
 import logging
 import sys
+import time
 from abc import ABC, abstractmethod
 
 from common_crawler.configuration import CONFIGURATION, COMPONENTS_CONFIG
@@ -170,6 +171,7 @@ class Engine(ABC):
 
     def start(self):
         try:
+            self.start_time = time.time()
             self.logger.info('The Crawler Engine<%s.%s> starts...'
                              % (self.__module__, self.__class__.__name__))
 
@@ -181,6 +183,7 @@ class Engine(ABC):
             print(message)
             self.logger.error(message)
         finally:
+            self.end_time = time.time()
             self.reporting()
 
     def show_config_info(self):
@@ -208,14 +211,25 @@ class Engine(ABC):
         self.logger.info('-------------------------------------')
         self.logger.info('[CONFIG INFORMATION] <---- ')
 
+    def reporting(self):
+        """Reporting the info that finished the task with crawler.finished_urls"""
+        finished = [t for t in self.crawler.finished_urls if t is not None]
+        finished = finished.sort(key=lambda t: t.url)
+
+        self.logger.info('--------- Finished task ---------')
+        self.logger.info('The number of the finished task: %s' % len(finished))
+        for t in finished:
+            self.logger.info('Task(%s) - %s<%s>:%s content: %s<%s> retries %s redirects %s'
+                             % ('Invalid, error: %s' % t.exception if t.exception else 'Valid',
+                                t.url, t.status, t.reason,
+                                t.content_type, t.content_length,
+                                t.retries_num, t.redirect_num))
+
+        self.logger.info('--------- Total time %ss ---------' % int(self.start_time - self.end_time))
+
     @abstractmethod
     def work(self):
         """The concrete logic that is implemented by a subclass"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def reporting(self):
-        """Reporting the info that finished the task with crawler.finished_urls"""
         raise NotImplementedError
 
     @abstractmethod
