@@ -19,7 +19,8 @@ class TestSimpleFilePipeline(unittest.TestCase):
                                exception=None,
                                redirect_num=0,
                                retries_num=0,
-                               redirect_url=None)
+                               redirect_url=None,
+                               html=None)
 
     def test_transmit(self):
         m = mock_open()
@@ -31,9 +32,26 @@ class TestSimpleFilePipeline(unittest.TestCase):
                 pipeline.transmit(task=self.task, encode=expected_encode)
 
         domain = self.task.url[self.task.url.find('www'):]
-        default_filename = '%s:%s' % (domain, self.task.status)
+        default_filename = '%s:%s.html' % (domain, self.task.status)
 
         m.assert_called_once_with(default_filename, expected_mode)
+        handle = m()
+        handle.write.assert_called_once_with(self.task.parsed_data.encode(expected_encode))
+
+    def test_suffix(self):
+        m = mock_open()
+        expected_suffix = 'txt'
+        expected_mode = 'wb+'
+        expected_encode = 'utf-8'
+
+        with patch(self.open_path, m):
+            with SimpleFilePipeline() as pipeline:
+                pipeline.transmit(task=self.task, suffix=expected_suffix, encode=expected_encode)
+
+        domain = self.task.url[self.task.url.find('www'):]
+        expected_filename = '%s:%s.%s' % (domain, self.task.status, expected_suffix)
+
+        m.assert_called_once_with(expected_filename, expected_mode)
         handle = m()
         handle.write.assert_called_once_with(self.task.parsed_data.encode(expected_encode))
 

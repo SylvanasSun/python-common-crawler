@@ -30,7 +30,7 @@ class SimpleFilePipeline(Pipeline):
 
     def transmit(self,
                  task,
-                 filename=None,
+                 suffix='html',
                  dirname='',
                  encode='utf-8',
                  **kwargs):
@@ -43,8 +43,9 @@ class SimpleFilePipeline(Pipeline):
 
         self.setup(**kwargs)
 
-        filename = filename if filename else '%s:%s' % (get_domain(self.task.url),
-                                                        self.task.status)
+        filename = '%s:%s.%s' % (get_domain(self.task.url),
+                                 self.task.status,
+                                 suffix)
         if dirname:
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
