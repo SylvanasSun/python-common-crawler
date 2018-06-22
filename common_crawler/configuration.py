@@ -49,7 +49,10 @@ CONFIGURATION = {
     'max_retries': 4,
 
     # Limit the maximum number of concurrent connections
-    'max_tasks': 100
+    'max_tasks': 100,
+
+    # The interval is a time that crawls interval (unit seconds)
+    'interval': 1
 }
 
 # Specify the address of each component

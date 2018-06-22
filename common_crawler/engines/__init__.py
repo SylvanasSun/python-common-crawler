@@ -232,6 +232,41 @@ class Engine(ABC):
         """The concrete logic that is implemented by a subclass"""
         raise NotImplementedError
 
+    def handle(self, task):
+        """
+        Add links and transmit data when got a task from Crawler then sleep for a while by the interval.
+
+        Notice!!! each subclass must call this function when got a task in the function work().
+
+        :param task: a task return from Crawler.crawl()
+        """
+        self.add_links(task)
+        self.transit_data(task)
+        time.sleep(self.config['interval'])
+
+    def add_links(self, task):
+        """
+        Add the links to the task queue for next crawl if config item follow is True.
+
+        :param task: a task return from Crawler.crawl()
+        """
+        if self.config['follow']:
+            encoding = task.charset if task.charset else 'utf-8'
+            links = self.link_extractor.extract_links(response=task.html, encoding=encoding)
+            links = [l.url for l in links]
+            self.crawler.add_to_task_queue(links)
+
+    def transit_data(self, task):
+        """
+        Transmit that parsed data by default pipeline SimpleFilePipeline,
+        you may need to overwrite this function if the pipeline is not default.
+
+        :param task: a task return from Crawler.crawl()
+        """
+        self.pipeline.transmit(task,
+                               dirname='data',
+                               encode=task.charset if task.charset else 'utf-8')
+
     @abstractmethod
     def close(self):
         raise NotImplementedError
