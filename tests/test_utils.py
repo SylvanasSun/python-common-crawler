@@ -4,6 +4,10 @@ from common_crawler.utils.misc import *
 from common_crawler.utils.url import *
 
 
+def pow(x=0, y=0):
+    return x ** y
+
+
 class TestMisc(unittest.TestCase):
     """Test for common_crawler.utils.misc"""
 
@@ -21,6 +25,12 @@ class TestMisc(unittest.TestCase):
         p = dynamic_import('math.pi', DynamicImportReturnType.VARIABLE)
         from math import pi
         self.assertEqual(p, pi)
+
+        pow_re = dynamic_import('%s.%s' % (self.__class__.__module__, 'pow'),
+                                DynamicImportReturnType.FUNCTION,
+                                x=2,
+                                y=2)
+        self.assertEqual(pow_re, 4)
 
         with self.assertRaises(TypeError):
             dynamic_import(1000, DynamicImportReturnType.VARIABLE)

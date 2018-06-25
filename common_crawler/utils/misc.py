@@ -16,7 +16,7 @@ class DynamicImportReturnType(object):
     VARIABLE = 'VARIABLE'
 
 
-def dynamic_import(full_name, return_type, *args):
+def dynamic_import(full_name, return_type, *args, **kwargs):
     """
     Dynamic import a function or class and variable based on the specified full name.
 
@@ -26,6 +26,7 @@ def dynamic_import(full_name, return_type, *args):
 
     :param full_name: the full name of a function or class and variable
     :param args: the args list for a function or a constructor in a class
+    :param kwargs: the keyword arguments for a function or a constructor in a class
     :return the return value of a function or instance object of a class and variable
     :raise TypeError if the full name is wrong
     :raise AttributeError if the return_type is invalid
@@ -40,6 +41,8 @@ def dynamic_import(full_name, return_type, *args):
             or return_type == DynamicImportReturnType.CLASS:
         if len(args) > 0:
             return target(*args)
+        elif len(kwargs) > 0:
+            return target(**kwargs)
         else:
             return target()
     elif return_type == DynamicImportReturnType.VARIABLE:
