@@ -29,8 +29,8 @@ def _init_logging(configuration):
     log_formatter = None
 
     if isinstance(log_format, str):
-        log_formatter = logging.Formatter(log_format)
-        logging.basicConfig(level=log_level, format=log_formatter)
+        log_formatter = logging.Formatter(fmt=log_format)
+        logging.basicConfig(level=log_level, format=log_format)
     else:
         logging.basicConfig(level=log_level)
 
@@ -55,6 +55,7 @@ class Engine(ABC):
 
     def __init__(self,
                  configuration=CONFIGURATION,
+                 components=COMPONENTS_CONFIG,
                  crawler=None,
                  http_client=None,
                  task_queue=None,
@@ -67,10 +68,13 @@ class Engine(ABC):
 
         :param configuration: the configuration usually comes from configuration.py
 
+        :param components: param "components" is a dictionary that configuration of the components,
+        default config item please refer to configuration.COMPONENTS_CONFIG
+
         :param crawler: the crawler is for crawling url then return an object FetchedUrl
         to Engine for extract link and handle data, the class must be a subclass of
         common_crawler.crawler.Crawler, if it is None will create a crawler by
-        COMPONENTS_CONFIG['crawler']
+        components['crawler']
 
         :param http_client: the http_client is for making an HTTP request and must be a subclass
         of HttpClient, this param will be delivered to Crawler and if it is None will create a
@@ -83,7 +87,7 @@ class Engine(ABC):
         :param link_extractor: the link_extractor is for extract link from a specified response
         and it must be a subclass of common_crawler.link_extractor.LinkExtractor, about rules
         of this action, is set in the CONFIGURATION such as deny_domains, allow_domains and so on
-        if this param is None will be going to load from COMPONENTS_CONFIG['link_extractor']
+        if this param is None will be going to load from components['link_extractor']
 
         :param parse_link: the parse_link is a function for handle data by a specified response
         (is a unary function and param must is a response of HTTP), it should is a function that
@@ -92,7 +96,7 @@ class Engine(ABC):
 
         :param pipeline: the pipeline is for transmitting parsed data to a place that you want it
         and must be a subclass of common_crawler.pipeline.Pipeline, if this param is None will be
-        going to load from COMPONENTS_CONFIG['pipeline']
+        going to load from components['pipeline']
 
         :param kwargs: additional configuration item that has precedence over CONFIGURATION
         """
@@ -121,16 +125,16 @@ class Engine(ABC):
             print('next, call the default function for initialize log system.')
             self.logger = _init_logging(self.config)
 
-        self.crawler = crawler if crawler else dynamic_import(COMPONENTS_CONFIG['crawler'],
+        self.crawler = crawler if crawler else dynamic_import(components['crawler'],
                                                               ReturnType.CLASS,
-                                                              self.config['name'],
-                                                              self.config['roots'],
-                                                              self.config['strict'],
-                                                              self.config['max_redirect'],
-                                                              self.config['max_retries'],
-                                                              task_queue,
-                                                              http_client,
-                                                              self.logger)
+                                                              name=self.config['name'],
+                                                              roots=self.config['roots'],
+                                                              strict=self.config['strict'],
+                                                              max_redirect=self.config['max_redirect'],
+                                                              max_retries=self.config['max_retries'],
+                                                              task_queue=task_queue,
+                                                              http_client=http_client,
+                                                              logger=self.logger)
 
         if callable(parse_link):
             self.crawler.parse_link = parse_link
@@ -143,12 +147,14 @@ class Engine(ABC):
                                 self.crawler.__class__.__name__)
                              )
 
-        self.link_extractor = link_extractor if link_extractor else dynamic_import(COMPONENTS_CONFIG['link_extractor'],
+        self.link_extractor = link_extractor if link_extractor else dynamic_import(components['link_extractor'],
                                                                                    ReturnType.CLASS,
-                                                                                   self.config['allowed_rule'],
-                                                                                   self.config['denied_rule'],
-                                                                                   self.config['allow_domains'],
-                                                                                   self.config['deny_domains'])
+                                                                                   allow=self.config['allowed_rule'],
+                                                                                   deny=self.config['denied_rule'],
+                                                                                   allow_domains=self.config[
+                                                                                       'allow_domains'],
+                                                                                   deny_domains=self.config[
+                                                                                       'deny_domains'])
 
         if not isinstance(self.link_extractor, LinkExtractor):
             raise ValueError('The link extractor is invalid and must be a subclass of %s.%s, got %s.%s'
@@ -158,7 +164,7 @@ class Engine(ABC):
                                 self.link_extractor.__class__.__name__)
                              )
 
-        self.pipeline = pipeline if pipeline else dynamic_import(COMPONENTS_CONFIG['pipeline'],
+        self.pipeline = pipeline if pipeline else dynamic_import(components['pipeline'],
                                                                  ReturnType.CLASS)
 
         if not isinstance(self.pipeline, Pipeline):
@@ -241,7 +247,7 @@ class Engine(ABC):
         :param task: a task return from Crawler.crawl()
         """
         self.add_links(task)
-        self.transit_data(task)
+        self.transmit_data(task)
         time.sleep(self.config['interval'])
 
     def add_links(self, task):
@@ -256,7 +262,7 @@ class Engine(ABC):
             links = [l.url for l in links]
             self.crawler.add_to_task_queue(links)
 
-    def transit_data(self, task):
+    def transmit_data(self, task):
         """
         Transmit that parsed data by default pipeline SimpleFilePipeline,
         you may need to overwrite this function if the pipeline is not default.
