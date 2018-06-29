@@ -219,8 +219,7 @@ class Engine(ABC):
 
     def reporting(self):
         """Reporting the info that finished the task with crawler.finished_urls"""
-        finished = [t for t in self.crawler.finished_urls if t is not None]
-        finished = finished.sort(key=lambda t: t.url)
+        finished = self._clean_for_finished_urls()
 
         self.logger.info('--------- Finished task ---------')
         self.logger.info('The number of the finished task: %s' % len(finished))
@@ -232,6 +231,12 @@ class Engine(ABC):
                                 t.retries_num, t.redirect_num))
 
         self.logger.info('--------- Total time %ss ---------' % int(self.start_time - self.end_time))
+
+    def _clean_for_finished_urls(self):
+        finished = [t for t in self.crawler.finished_urls if t is not None]
+        finished.sort(key=lambda t: t.url)
+        self.crawler.finished_urls = finished
+        return finished
 
     @abstractmethod
     def work(self):
@@ -248,7 +253,10 @@ class Engine(ABC):
         """
         self.add_links(task)
         self.transmit_data(task)
-        time.sleep(self.config['interval'])
+
+        interval = self.config['interval']
+        if interval > 0:
+            time.sleep(interval)
 
     def add_links(self, task):
         """
