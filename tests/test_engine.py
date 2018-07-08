@@ -193,19 +193,6 @@ class TestAsyncEngine(unittest.TestCase):
 
         asyncio.get_event_loop().run_until_complete(judge())
 
-    def test_add_links_not_follow(self):
-        self.configuration['follow'] = False
-        engine = self._get_default_engine()
-
-        async def judge():
-            async with engine:
-                engine.add_links(self.task)
-
-                task_queue = engine.crawler.task_queue
-                self.assertEqual(task_queue.qsize(), 0)
-
-        asyncio.get_event_loop().run_until_complete(judge())
-
     def test_transmit_data(self):
         engine = self._get_default_engine()
 
@@ -232,6 +219,22 @@ class TestAsyncEngine(unittest.TestCase):
                 self.assertEqual(task_queue.qsize(), 1)
                 task = await task_queue.get()
                 self.assertEqual(task.url, engine.link_extractor.return_val.url)
+
+        asyncio.get_event_loop().run_until_complete(judge())
+
+    def test_handle_not_follow(self):
+        self.configuration['follow'] = False
+        engine = self._get_default_engine()
+
+        async def judge():
+            async with engine:
+                engine.handle(self.task)
+
+                pipeline = engine.pipeline
+                self.assertEqual(pipeline.task, self.task)
+
+                task_queue = engine.crawler.task_queue
+                self.assertEqual(task_queue.qsize(), 0)
 
         asyncio.get_event_loop().run_until_complete(judge())
 

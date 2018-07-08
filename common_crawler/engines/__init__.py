@@ -245,13 +245,16 @@ class Engine(ABC):
 
     def handle(self, task):
         """
-        Add links and transmit data when got a task from Crawler then sleep for a while by the interval.
+        Add links to the task queue for next crawl if config item "follow" is True
+        and transmit data when got a task from Crawler then sleep for a while by the interval.
 
         Notice!!! each subclass must call this function when got a task in the function work().
 
         :param task: a task return from Crawler.crawl()
         """
-        self.add_links(task)
+        if self.config['follow']:
+            self.add_links(task)
+
         self.transmit_data(task)
 
         interval = self.config['interval']
@@ -260,15 +263,14 @@ class Engine(ABC):
 
     def add_links(self, task):
         """
-        Add the links to the task queue for next crawl if config item follow is True.
+        Add the links to the task queue for next crawl.
 
         :param task: a task return from Crawler.crawl()
         """
-        if self.config['follow']:
-            encoding = task.charset if task.charset else 'utf-8'
-            links = self.link_extractor.extract_links(response=task.html, encoding=encoding)
-            links = [l.url for l in links]
-            self.crawler.add_to_task_queue(links)
+        encoding = task.charset if task.charset else 'utf-8'
+        links = self.link_extractor.extract_links(response=task.html, encoding=encoding)
+        links = [l.url for l in links]
+        self.crawler.add_to_task_queue(links)
 
     def transmit_data(self, task):
         """
