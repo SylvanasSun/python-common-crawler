@@ -1,26 +1,28 @@
 import unittest
 from unittest.mock import patch, mock_open, MagicMock
 
-from common_crawler.crawler import FetchedUrl
 from common_crawler.pipeline.file import SimpleFilePipeline
+from common_crawler.task import Task
+from tests.mock import FakedObject
 
 
 class TestSimpleFilePipeline(unittest.TestCase):
     def setUp(self):
         self.open_path = 'builtins.open'
-        self.task = FetchedUrl(url='https://www.example.com',
-                               parsed_data='Test',
+        url = 'https://www.example.com'
+
+        response = FakedObject(url=url,
                                status=200,
                                charset='utf-8',
                                content_type=None,
                                content_length=None,
                                reason=None,
                                headers=None,
-                               exception=None,
-                               redirect_num=0,
-                               retries_num=0,
-                               redirect_url=None,
-                               html=None)
+                               text=None)
+
+        self.task = Task(url=url,
+                         parsed_data='Text',
+                         response=response)
 
     def test_transmit(self):
         m = mock_open()
@@ -32,7 +34,8 @@ class TestSimpleFilePipeline(unittest.TestCase):
                 pipeline.transmit(task=self.task, encode=expected_encode)
 
         domain = self.task.url[self.task.url.find('www'):]
-        default_filename = '%s:%s.html' % (domain, self.task.status)
+        response = self.task.response
+        default_filename = '%s:%s.html' % (domain, response.status)
 
         m.assert_called_once_with(default_filename, expected_mode)
         handle = m()
@@ -49,7 +52,8 @@ class TestSimpleFilePipeline(unittest.TestCase):
                 pipeline.transmit(task=self.task, suffix=expected_suffix, encode=expected_encode)
 
         domain = self.task.url[self.task.url.find('www'):]
-        expected_filename = '%s:%s.%s' % (domain, self.task.status, expected_suffix)
+        response = self.task.response
+        expected_filename = '%s:%s.%s' % (domain, response.status, expected_suffix)
 
         m.assert_called_once_with(expected_filename, expected_mode)
         handle = m()

@@ -34,17 +34,16 @@ class FakedCrawler(Crawler):
             self.task_queue.put_nowait(FakedObject(
                 url=u,
                 parsed_data=None,
-                status=None,
-                charset=None,
-                content_type=None,
-                content_length=0,
-                reason=None,
-                headers=None,
                 exception=None,
                 redirect_num=0,
                 retries_num=0,
                 redirect_url=None,
-                html=None
+                response=FakedObject(status=200,
+                                     charset='utf-8',
+                                     content_type='text/html',
+                                     content_length=None,
+                                     reason='OK',
+                                     headers=None)
             ))
 
     def _init_task_queue(self):
@@ -127,17 +126,19 @@ class TestAsyncEngine(unittest.TestCase):
 
         self.task = FakedObject(url='https://www.google.com',
                                 parsed_data=None,
-                                status=200,
-                                charset='utf-8',
-                                content_type='text/html',
-                                content_length=None,
-                                reason='OK',
-                                headers=None,
                                 exception=None,
                                 redirect_num=0,
                                 retries_num=0,
                                 redirect_url=None,
-                                html='<html><body><a href="/abc"></a></body></html>')
+                                )
+        self.task.response = FakedObject(url=self.task.url,
+                                         status=200,
+                                         charset='utf-8',
+                                         content_type='text/html',
+                                         content_length=None,
+                                         reason='OK',
+                                         headers=None,
+                                         text='<html><body><a href="/abc"></a></body></html>')
 
         self.task_queue = asyncio.Queue()
         self.http_client = FakedObject()

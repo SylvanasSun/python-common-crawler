@@ -2,8 +2,10 @@
 
 from abc import ABC, abstractmethod
 
+from cssselect import HTMLTranslator
 from w3lib.url import canonicalize_url
 
+from common_crawler.http import Response
 from common_crawler.utils.misc import arg_to_iter, compile_regexes, matches, unique_list
 from common_crawler.utils.url import is_valid_url, url_in_domains, url_has_extension, parse_url
 
@@ -42,9 +44,12 @@ class LinkExtractor(ABC):
     Each element in the extracted links must be an object Link from common_crawler.link.
     """
 
+    _css_translator = HTMLTranslator()
+
     def __init__(self, allow=(), deny=(), allow_domains=(), deny_domains=(),
                  tags=('a', 'area'), attrs=('href',), canonicalize=False, unique=True,
-                 process_attr=None, deny_extensions=None, strip=True):
+                 process_attr=None, deny_extensions=None, strip=True,
+                 restrict_xpaths=(), restrict_css=()):
         """
         :param allow:
             a regular expression tuple(or single value) that the URLs must match in order to extract.
@@ -68,6 +73,12 @@ class LinkExtractor(ABC):
             a extension list(or single value) that should be ignored when extracting links.
         :param strip:
             whether to strip whitespaces from extracted attributes, according to HTML5 standard.
+        :param restrict_xpaths:
+            an XPath or list of XPath which defines regions inside the response where links should
+            be extracted from.
+        :param restrict_css:
+            a CSS or list of CSS which defines regions inside the response where links should
+            be extracted from.
         """
 
         self.unique = unique
@@ -91,6 +102,10 @@ class LinkExtractor(ABC):
         else:
             self.link_key = lambda link: canonicalize_url(link.url,
                                                           keep_fragments=True)
+
+        self.restrict_xpaths = tuple(arg_to_iter(restrict_xpaths))
+        self.restrict_xpaths += tuple(map(self._css_translator.css_to_xpath,
+                                          arg_to_iter(restrict_css)))
 
     def _link_allowed(self, link):
         """Return true if the link meets the requirements of the rules."""

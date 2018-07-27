@@ -3,8 +3,10 @@
 import json
 
 from aiohttp import ClientSession, ClientRequest, ClientWebSocketResponse, http, ClientResponse
+from lxml import etree
 
-from common_crawler.http import HttpClient, ResponseDataType
+from common_crawler.http import Response
+from common_crawler.http.client import HttpClient
 from common_crawler.utils.misc import dynamic_import, DynamicImportReturnType
 
 __all__ = ['AioHttpClient']
@@ -77,24 +79,17 @@ class AioHttpClient(HttpClient):
     async def close(self):
         await self.client.close()
 
-    async def get_response_data(self, response, type):
-        if type == ResponseDataType.HTML:
-            text = await response.text()
-            return text
-        elif type == ResponseDataType.STATUS_CODE:
-            return response.status
-        elif type == ResponseDataType.CHARSET:
-            return response.charset
-        elif type == ResponseDataType.CONTENT_TYPE:
-            return response.content_type
-        elif type == ResponseDataType.CONTENT_LENGTH:
-            return response.content_length
-        elif type == ResponseDataType.REASON:
-            return response.reason
-        elif type == ResponseDataType.HEADERS:
-            return response.headers
-        else:
-            raise ValueError('The param type is invalid, got %s' % type)
+    async def get_response(self, response):
+        text = await response.text()
+        return Response(url=response.url,
+                        status=response.status,
+                        charset=response.charset,
+                        content_type=response.content_type,
+                        content_length=response.content_length,
+                        reason=response.reason,
+                        headers=response.headers,
+                        text=text,
+                        selector=etree.HTML(text))
 
     async def __aenter__(self):
         return self

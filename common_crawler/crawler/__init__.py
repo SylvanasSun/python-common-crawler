@@ -6,7 +6,7 @@ from common_crawler.configuration import CONFIGURATION
 from common_crawler.utils.misc import get_function_by_name, arg_to_iter
 from common_crawler.utils.url import revise_urls
 
-__all__ = ['Crawler', 'FetchedUrl']
+__all__ = ['Crawler']
 
 # Default global configuration
 DEFAULT_NAME = CONFIGURATION.get('name', 'common_crawler')
@@ -23,11 +23,11 @@ class Crawler(ABC):
     A Crawler will be first to initialize the task queue base on the roots, in other words,
     push each item in the roots into the task queue and incoming parameter of the function
     add_to_task_queue(url) needs to be wrapped because the acceptable object of task queue
-    is the class FetchedUrl.
+    is the class Task.
 
     There are several important data structures that are task queue, seen_urls, and finished_urls,
-    the task queue be responsible for to store the object FetchedUrl and each element represent a
-    crawled URL then component Engine will be extract other links from the FetchedUrl by LinkExtractor
+    the task queue be responsible for to store the object Task and each element represent a
+    crawled URL then component Engine will be extract other links from the Task by LinkExtractor
     and push into the task queue, thus Crawler can get a new URL continually from the task queue to crawl,
     each crawled URL must be put in the seen_urls for distinguishing what is a duplicate, for the finished
     tasks, whether succeeded or failed, will be put in the finished_urls for subsequent recording.
@@ -80,7 +80,7 @@ class Crawler(ABC):
     @abstractmethod
     def crawl(self, parse_link=None):
         """
-        Return a URL that fetched (object FetchedUrl), each URL is from the task_queue and
+        Return a URL that fetched (object Task), each URL is from the task_queue and
         make a request via http_client then parse the response.
         """
         raise NotImplementedError
@@ -130,46 +130,3 @@ class Crawler(ABC):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-
-
-class FetchedUrl(object):
-    """
-    A fetched URL and it contains parsed data via parse_link(), metadata of the response,
-    captured the exception and the number of redirect and retry of URL.
-    """
-
-    __slots__ = [
-        'url', 'parsed_data', 'status', 'charset',
-        'content_type', 'content_length', 'reason',
-        'headers', 'exception',
-        'redirect_num', 'retries_num', 'redirect_url',
-        'html'
-    ]
-
-    def __init__(self, url, parsed_data, status, charset,
-                 content_type, content_length,
-                 reason, headers, exception,
-                 redirect_num, retries_num, redirect_url,
-                 html):
-        self.url = url
-        self.parsed_data = parsed_data
-        self.status = status
-        self.charset = charset
-        self.content_type = content_type
-        self.content_length = content_length
-        self.reason = reason
-        self.headers = headers
-        self.exception = exception
-        self.redirect_num = redirect_num
-        self.retries_num = retries_num
-        self.redirect_url = redirect_url
-        self.html = html
-
-    def __repr__(self):
-        return 'FetchedUrl(%s-%s:%s content <%s:%s>)' \
-               % (
-                   self.url, self.status, self.reason,
-                   self.content_type, self.content_length
-               )
-
-    __str__ = __repr__

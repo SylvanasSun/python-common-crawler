@@ -21,11 +21,28 @@ class LxmlLinkExtractor(LinkExtractor):
         super(LxmlLinkExtractor, self).__init__(**kwargs)
 
     def _process(self, response, encoding='utf-8'):
-        """The specification see the superclass LinkExtractor."""
         base_url = response.url
+        root = etree.HTML(self._get_response_text(response))
+
+        if self.restrict_xpaths:
+            docs = []
+            for x in self.restrict_xpaths:
+                docs.extend(root.xpath(x))
+        else:
+            docs = [root]
+
+        all_links = []
+        for doc in docs:
+            links = self._extract(doc, base_url, encoding)
+            all_links.extend(links)
+
+        return all_links
+
+    def _extract(self, selector, base_url, encoding):
+        """The specification see the superclass LinkExtractor."""
         links = []
-        HTML = etree.HTML(self._get_response_text(response))
-        for el, attr, attr_val in self._iter_links(HTML):
+
+        for el, attr, attr_val in self._iter_links(selector):
             try:
                 if self.strip:
                     attr_val = attr_val.strip(HTML5_WHITESPACE)
@@ -34,12 +51,15 @@ class LxmlLinkExtractor(LinkExtractor):
                 continue
             else:
                 url = self.process_attr(attr_val)
-                if url is None: continue
+                if url is None:
+                    continue
+
             url = url.decode(encoding) if isinstance(url, bytes) else url
             # fix relative link after process_attr
             url = join_url(url=url, base_url=base_url)
             link = Link(url=url, text=_LXML_STRING_CONTENT(el) or u'')
             links.append(link)
+
         return links
 
     def _iter_links(self, document):

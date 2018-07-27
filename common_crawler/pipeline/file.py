@@ -44,7 +44,7 @@ class SimpleFilePipeline(Pipeline):
         self.setup(**kwargs)
 
         filename = '%s:%s.%s' % (get_domain(self.task.url),
-                                 self.task.status,
+                                 self.task.response.status,
                                  suffix)
         if dirname:
             if not os.path.exists(dirname):

@@ -71,7 +71,7 @@ class Engine(ABC):
         :param components: param "components" is a dictionary that configuration of the components,
         default config item please refer to configuration.COMPONENTS_CONFIG
 
-        :param crawler: the crawler is for crawling url then return an object FetchedUrl
+        :param crawler: the crawler is for crawling url then return an object Task
         to Engine for extract link and handle data, the class must be a subclass of
         common_crawler.crawler.Crawler, if it is None will create a crawler by
         components['crawler']
@@ -81,7 +81,7 @@ class Engine(ABC):
         HttpClient by means of the function _init_http_client() in the Crawler
 
         :param task_queue: the task_queue is queue which contains tasks and each task is an
-        object FetchedUrl, this param will be delivered to Crawler and if it is None will
+        object Task, this param will be delivered to Crawler and if it is None will
         create a task queue by means of the function _init_task_queue() in the Crawler
 
         :param link_extractor: the link_extractor is for extract link from a specified response
@@ -224,10 +224,12 @@ class Engine(ABC):
         self.logger.info('--------- Finished task ---------')
         self.logger.info('The number of the finished task: %s' % len(finished))
         for t in finished:
+            response = t.response
+
             self.logger.info('Task(%s) - %s<%s>:%s content: %s<%s> retries %s redirects %s'
                              % ('Invalid, error: %s' % t.exception if t.exception else 'Valid',
-                                t.url, t.status, t.reason,
-                                t.content_type, t.content_length,
+                                t.url, response.status, response.reason,
+                                response.content_type, response.content_length,
                                 t.retries_num, t.redirect_num))
 
         self.logger.info('--------- Total time %ss ---------' % int(self.start_time - self.end_time))
@@ -267,8 +269,9 @@ class Engine(ABC):
 
         :param task: a task return from Crawler.crawl()
         """
-        encoding = task.charset if task.charset else 'utf-8'
-        links = self.link_extractor.extract_links(response=task.html, encoding=encoding)
+        response = task.response
+        encoding = response.charset if response.charset else 'utf-8'
+        links = self.link_extractor.extract_links(response=response, encoding=encoding)
         links = [l.url for l in links]
         self.crawler.add_to_task_queue(links)
 
@@ -279,9 +282,10 @@ class Engine(ABC):
 
         :param task: a task return from Crawler.crawl()
         """
+        response = task.response
         self.pipeline.transmit(task,
                                dirname='data',
-                               encode=task.charset if task.charset else 'utf-8')
+                               encode=response.charset if response.charset else 'utf-8')
 
     @abstractmethod
     def close(self):

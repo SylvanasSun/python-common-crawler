@@ -2,7 +2,7 @@ import asyncio
 import unittest
 from unittest import mock
 
-from common_crawler.http.aiohttp import AioHttpClient
+from common_crawler.http.client.aiohttp import AioHttpClient
 from tests.mock import FakedObject
 
 _TARGET_URL = 'https://www.example.com/hello'
@@ -120,13 +120,15 @@ class TestAioHttpClient(unittest.TestCase):
         _LOOP.run_until_complete(work())
         mocked.assert_called_once_with(url=_TARGET_URL)
 
-    def test_get_response_data(self):
-        from common_crawler.http import ResponseDataType as type
+    def test_get_response(self):
+        from common_crawler.http import Response
+        from lxml.etree import _Element
 
         async def text():
             return 'HTML'
 
-        response = FakedObject(status=200,
+        response = FakedObject(url=_TARGET_URL,
+                               status=200,
                                charset='utf-8',
                                content_type='text/html',
                                content_length=233,
@@ -137,37 +139,36 @@ class TestAioHttpClient(unittest.TestCase):
 
         async def work():
             async with AioHttpClient() as client:
-                html = await client.get_response_data(response, type.HTML)
-                self.assertTrue(isinstance(html, str))
-                self.assertEqual('HTML', html)
+                expected = await client.get_response(response)
 
-                status = await client.get_response_data(response, type.STATUS_CODE)
-                self.assertTrue(isinstance(status, int))
-                self.assertEqual(status, 200)
+                self.assertTrue(isinstance(expected, Response))
 
-                charset = await client.get_response_data(response, type.CHARSET)
-                self.assertTrue(isinstance(charset, str))
-                self.assertEqual(charset, 'utf-8')
+                self.assertTrue(isinstance(expected.url, str))
+                self.assertEqual(_TARGET_URL, expected.url)
 
-                content_type = await client.get_response_data(response, type.CONTENT_TYPE)
-                self.assertTrue(isinstance(content_type, str))
-                self.assertEqual(content_type, 'text/html')
+                self.assertTrue(isinstance(expected.text, str))
+                self.assertEqual('HTML', expected.text)
 
-                content_length = await client.get_response_data(response, type.CONTENT_LENGTH)
-                self.assertTrue(isinstance(content_length, int))
-                self.assertEqual(content_length, 233)
+                self.assertTrue(isinstance(expected.status, int))
+                self.assertEqual(expected.status, 200)
 
-                reason = await client.get_response_data(response, type.REASON)
-                self.assertTrue(isinstance(reason, str))
-                self.assertEqual(reason, 'OK')
+                self.assertTrue(isinstance(expected.charset, str))
+                self.assertEqual(expected.charset, 'utf-8')
 
-                headers = await client.get_response_data(response, type.HEADERS)
-                self.assertTrue(isinstance(headers, dict))
-                self.assertTrue('connection' in headers)
-                self.assertEqual(headers['connection'], 'keep-alive')
+                self.assertTrue(isinstance(expected.content_type, str))
+                self.assertEqual(expected.content_type, 'text/html')
 
-                with self.assertRaises(ValueError):
-                    await client.get_response_data(response, 'something')
+                self.assertTrue(isinstance(expected.content_length, int))
+                self.assertEqual(expected.content_length, 233)
+
+                self.assertTrue(isinstance(expected.reason, str))
+                self.assertEqual(expected.reason, 'OK')
+
+                self.assertTrue(isinstance(expected.headers, dict))
+                self.assertTrue('connection' in expected.headers)
+                self.assertEqual(expected.headers['connection'], 'keep-alive')
+
+                self.assertTrue(isinstance(expected.selector, _Element))
 
         _LOOP.run_until_complete(work())
 

@@ -87,6 +87,36 @@ class TestLxmlLinkExtractor(unittest.TestCase):
         links = self.linkExtractor.extract_links(self.response)
         self.assertEqual(len(links), 3)
 
+    def test_restrict_css(self):
+        css_name_01 = "container"
+        css_name_02 = "btn"
+        url_01 = "https://www.python.org"
+        url_02 = "http://www.google.com"
+
+        html = """
+        <html>  
+            <head></head>
+            <body>
+                <div id="div01" value="%s" class="%s">div01</div>
+                <div id="div02" value="%s" class="%s">div02</div>
+                <div id="div03">div03</div>
+            </body>
+        </html>
+        """ % (url_01, css_name_01, url_02, css_name_02)
+
+        linkExtractor = LxmlLinkExtractor(tags=('div',),
+                                          attrs=('value',),
+                                          restrict_css=('.%s' % css_name_01, '.%s' % css_name_02))
+
+        response = FakedObject(url="https://www.example.com", text=html)
+        links = linkExtractor.extract_links(response)
+
+        self.assertEqual(len(links), 2)
+        self.assertEqual(links[0].url, url_01)
+        self.assertEqual(links[0].text, 'div01')
+        self.assertEqual(links[1].url, url_02)
+        self.assertEqual(links[1].text, 'div02')
+
 
 if __name__ == '__main__':
     unittest.main()

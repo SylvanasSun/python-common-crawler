@@ -1,8 +1,8 @@
 import asyncio
 
-from common_crawler.crawler import Crawler, FetchedUrl
-from common_crawler.http import ResponseDataType as type
-from common_crawler.http.aiohttp import AioHttpClient
+from common_crawler.crawler import Crawler
+from common_crawler.http.client.aiohttp import AioHttpClient
+from common_crawler.task import Task
 from common_crawler.utils.misc import arg_to_iter
 from common_crawler.utils.url import join_url, is_redirect, get_domain
 
@@ -29,7 +29,7 @@ class AsyncCrawler(Crawler):
                 elif isinstance(task.exception, Exception):
                     self.logger.error('The url %s is invalid, raise exception %s' % (url, task.exception))
                 # if the task is valid
-                # return the FetchedUrl to the Engine for extract links and handle parsed data
+                # return the Task to the Engine for extract links and handle parsed data
                 else:
                     yield task
 
@@ -41,7 +41,7 @@ class AsyncCrawler(Crawler):
 
     async def _process(self, task, parse_link):
         """
-        Process the url and return the FetchedUrl which contains the parsed data.
+        Process the url and return the Task which contains the parsed data.
         """
         exception = None
         response = None
@@ -81,10 +81,10 @@ class AsyncCrawler(Crawler):
 
         # get parsed data by the function parse_link(), and handle the redirection
         async with response as resp:
-            await self._handle_request_info(task, resp)
+            task.response = await self.http_client.get_response(resp)
 
-            if is_redirect(task.status):
-                location = task.headers.get('location', url)
+            if is_redirect(task.response.status):
+                location = task.response.headers.get('location', url)
                 task.redirect_url = join_url(location, base_url=url)
 
                 if get_domain(task.redirect_url) in self.seen_urls:
@@ -100,44 +100,22 @@ class AsyncCrawler(Crawler):
                     return None, url
             else:
                 if parse_link is not None:
-                    task.parsed_data = parse_link(task)
+                    task.parsed_data = parse_link(task.response)
                 else:
-                    task.parsed_data = self.parse_link(task)
+                    task.parsed_data = self.parse_link(task.response)
                 return task, url
-
-    async def _handle_request_info(self, task, response):
-        """Packing the information of request into the FetchedUrl."""
-        task.status = await self.http_client.get_response_data(response, type.STATUS_CODE)
-        task.charset = await self.http_client.get_response_data(response, type.CHARSET)
-        task.content_type = await self.http_client.get_response_data(response, type.CONTENT_TYPE)
-        task.content_length = await self.http_client.get_response_data(response, type.CONTENT_LENGTH)
-        task.reason = await self.http_client.get_response_data(response, type.REASON)
-        task.headers = await self.http_client.get_response_data(response, type.HEADERS)
-        task.html = await self.http_client.get_response_data(response, type.HTML)
 
     def parse_link(self, response):
         """
         Only return the HTML content in the default implementation.
         """
-        return response.html
+        return response.text
 
     def add_to_task_queue(self, url):
         urls = arg_to_iter(url)
         for u in urls:
             self.task_queue.put_nowait(
-                FetchedUrl(url=u,
-                           parsed_data=None,
-                           status=None,
-                           charset=None,
-                           content_type=None,
-                           content_length=0,
-                           reason=None,
-                           headers=None,
-                           exception=None,
-                           redirect_num=0,
-                           retries_num=0,
-                           redirect_url=None,
-                           html=None)
+                Task(url=u)
             )
         self.logger.debug('Adding the url %s into the task queue' % urls)
 

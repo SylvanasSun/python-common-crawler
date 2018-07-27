@@ -5,7 +5,7 @@ from unittest.mock import patch
 from common_crawler.crawler.async import AsyncCrawler
 from tests.mock import FakedObject
 
-_MOCKED_TARGET = 'common_crawler.http.aiohttp.AioHttpClient.get'
+_MOCKED_TARGET = 'common_crawler.http.client.aiohttp.AioHttpClient.get'
 
 _URL = 'https://www.example.com'
 
@@ -67,17 +67,17 @@ class AsyncCrawlerTest(unittest.TestCase):
             async for t in crawler.crawl():
                 t = t
                 self.assertEqual(_URL, t.url)
-                self.assertEqual(_STATUS, t.status)
-                self.assertEqual(_HEADERS.get('connection'), t.headers.get('connection'))
+                self.assertEqual(_STATUS, t.response.status)
+                self.assertEqual(_HEADERS.get('connection'), t.response.headers.get('connection'))
                 self.assertEqual(0, t.retries_num)
                 self.assertEqual(0, t.redirect_num)
-                self.assertEqual(_CONTENT_TYPE, t.content_type)
-                self.assertEqual(_CONTENT_LENGTH, t.content_length)
-                self.assertEqual(_REASON, t.reason)
-                self.assertEqual(_CHARSET, t.charset)
+                self.assertEqual(_CONTENT_TYPE, t.response.content_type)
+                self.assertEqual(_CONTENT_LENGTH, t.response.content_length)
+                self.assertEqual(_REASON, t.response.reason)
+                self.assertEqual(_CHARSET, t.response.charset)
                 # default parse_link() will to extract HTML
                 self.assertEqual(_BODY, t.parsed_data)
-                self.assertEqual(t.parsed_data, t.html)
+                self.assertEqual(t.parsed_data, t.response.text)
             # seen_urls only store the domain name
             self.assertTrue(_URL[_URL.find('www'):] in crawler.seen_urls)
             self.assertTrue(t in crawler.finished_urls)
@@ -109,11 +109,12 @@ class AsyncCrawlerTest(unittest.TestCase):
 
     def test_parse_link(self):
         crawler = AsyncCrawler()
-        self.response.html = _BODY
+        self.response.text = _BODY
+        self.response.get_text = _TEXT
 
         async def work():
             async with crawler:
-                expected = await self.response.text()
+                expected = await self.response.get_text()
                 actual = crawler.parse_link(self.response)
                 self.assertEqual(expected, actual)
 

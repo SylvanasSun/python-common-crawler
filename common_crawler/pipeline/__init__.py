@@ -5,7 +5,7 @@ a destination of transmission can be file or database.
 
 from abc import ABC, abstractmethod
 
-from common_crawler.crawler import FetchedUrl
+from common_crawler.task import Task
 
 __all__ = ['Pipeline']
 
@@ -33,10 +33,10 @@ class Pipeline(ABC):
             self.close(**kwargs)
 
     def _init_task(self, task):
-        if not isinstance(task, FetchedUrl):
+        if not isinstance(task, Task):
             raise ValueError('Received class of the param task must be %s.%s, currently got %s.%s'
-                             % (FetchedUrl.__module__,
-                                FetchedUrl.__name__,
+                             % (Task.__module__,
+                                Task.__name__,
                                 task.__class__.__module__,
                                 task.__class__.__name__)
                              )
